@@ -186,7 +186,8 @@ class XXMPEG:
             f = out.run(quiet=True)
             frame_out = (
                 ffmpeg
-                .output(video, variant.frame_path, vframes=1)
+                .output(video, variant.frame_path, vframes=1,
+                        ss=self.video.extract_time)
                 .overwrite_output()
             )
             frame_out.run(quiet=True)
