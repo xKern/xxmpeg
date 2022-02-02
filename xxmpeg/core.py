@@ -163,10 +163,19 @@ class XXMPEG:
             streams.append(video)
 
             if self.video.has_audio:
-                audio = variant.audio
+                audio = self.video.ffmpeg.audio
                 streams.append(audio)
 
-            out = ffmpeg.output(*streams, variant.path).overwrite_output()
+            args = {
+                'vcodec': 'libx264',
+                'acodec': 'libmp3lame',
+                'video_bitrate': '2.5M',
+                'format': 'mp4'
+            }
+            out = (
+                ffmpeg.output(*streams, variant.path, **args)
+                .overwrite_output()
+            )
             out.run()
             frame_out = (
                 ffmpeg
