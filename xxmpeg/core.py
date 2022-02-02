@@ -1,6 +1,7 @@
 from logzero import setup_logger
-# from prettyprinter import cpprint
+from prettyprinter import cpprint
 from dataclasses import dataclass
+import random
 from typing import Any
 import ffmpeg
 import os
@@ -17,6 +18,7 @@ class InputVideo:
     name: str
     ext: str
     ffmpeg: Any
+    extract_time: int
 
 
 @dataclass
@@ -98,7 +100,10 @@ class XXMPEG:
         codec = video_stream['codec_name']
         duration = float(video_stream['duration'])
         name, ext = os.path.splitext(os.path.basename(self.input_path))
-
+        
+        extract_time = random.randrange(1, int(duration))
+        print(extract_time)
+        print(duration)
         self.video = InputVideo(
             path=self.input_path,
             height=orig_height,
@@ -108,7 +113,8 @@ class XXMPEG:
             duration=duration,
             ffmpeg=ffmpeg.input(self.input_path),
             name=name,
-            ext=ext
+            ext=ext,
+            extract_time=extract_time
         )
 
     def __create_variant(self, height, width, size_category):
@@ -155,6 +161,7 @@ class XXMPEG:
         return (new_height, new_width)
 
     def output(self):
+        self.video_variants = [self.video_variants[0]]
         for variant in self.video_variants:
             streams = []
             video = variant.ffmpeg.video
@@ -172,16 +179,18 @@ class XXMPEG:
                 'video_bitrate': '2.5M',
                 'format': 'mp4'
             }
-            out = (
+            y = out = (
                 ffmpeg.output(*streams, variant.path, **args)
                 .overwrite_output()
             )
-            out.run()
+            f = out.run(quiet=True)
             frame_out = (
                 ffmpeg
                 .output(video, variant.frame_path, vframes=1)
                 .overwrite_output()
             )
-            frame_out.run()
+            frame_out.run(quiet=True)
+            cpprint(y)
+            cpprint(f)
 
         return self.video_variants
