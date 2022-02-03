@@ -9,7 +9,7 @@ class InputVideo:
     has_audio: bool
     height: float
     width: float
-    duration: int
+    duration: float
     name: str
     ext: str
     ffmpeg: Any
@@ -22,7 +22,7 @@ class VideoVariant:
     codec: str
     height: float
     width: float
-    duration: int
+    duration: float
     name: str
     ext: str
     size_category: int
@@ -41,15 +41,15 @@ class VideoVariant:
 class VideoObject:
     name: str
     output_directory: str
-    maximum_size_category: int
-    preferred_size_category: int
-    duration: int
+    duration: float
     variants: Optional[List[VideoVariant]]
+    maximum_size_category: int = 0
+    preferred_size_category: int = 0
 
     @property
     def thumbnail(self):
         return f'{self.output_directory}/{self.name}_thumb.jpeg'
 
     @property
-    def frame_path(self):
-        return f'{self.output_directory}/{self.name}_{self.height}p_frame.jpeg'
+    def placeholder_frame(self):
+        return f'{self.output_directory}/{self.name}_frame.jpeg'

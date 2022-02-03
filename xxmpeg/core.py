@@ -17,6 +17,7 @@ class XXMPEG:
         self.input_path = input_path
         self.output_directory = output_directory.rstrip("/")
         self.name = os.path.basename(self.input_path)
+        self.probe = None
 
         """
         All the resolutions that the video will be resized to.
@@ -44,28 +45,23 @@ class XXMPEG:
         self.__ff_open()
         self.__generate_variants()
 
-    def __ff_open(self):
-        probe = ffmpeg.probe(self.input_path)
+    def __factory_input_video(self):
         """
-        Get the video stream
+        Factory method to create InputVideo
         """
-        video_stream = probe['streams'][0]
-
-        """
-        Check if an audio stream is available
-        """
-        has_audio = False
-        for stream in probe['streams']:
-            if stream['codec_type'] == "audio":
-                has_audio = True
-
+        video_stream = self.probe['streams'][0]
         orig_width = video_stream['width']
         orig_height = video_stream['height']
         codec = video_stream['codec_name']
         duration = float(video_stream['duration'])
         name, ext = os.path.splitext(os.path.basename(self.input_path))
-
         extract_time = random.randrange(1, int(duration))
+
+        has_audio = False
+        for stream in self.probe['streams']:
+            if stream['codec_type'] == "audio":
+                has_audio = True
+
         self.video = InputVideo(
             path=self.input_path,
             height=orig_height,
@@ -79,13 +75,18 @@ class XXMPEG:
             extract_time=extract_time
         )
 
+    def __factory_video_object(self):
         self.video_object = VideoObject(
-            name=name,
-            maximum_size_category=0,
-            preferred_size_category=0,
-            duration=duration,
+            output_directory=self.output_directory,
+            name=self.video.name,
+            duration=self.video.duration,
             variants=[]
         )
+
+    def __ff_open(self):
+        self.probe = ffmpeg.probe(self.input_path)
+        self.__factory_input_video()
+        self.__factory_video_object()
 
     def __create_variant(self, height, width, size_category):
         return VideoVariant(
@@ -116,6 +117,14 @@ class XXMPEG:
 
         self.generated_sizes = self.size_categories[0:closest_size_category]
         self.generated_sizes.append(self.video.height)
+
+        preferred_size_category = len(self.generated_sizes) - 1
+
+        """
+        These two properties were ommited in the factory method
+        """
+        self.video_object.maximum_size_category = preferred_size_category
+        self.video_object.preferred_size_category = preferred_size_category
 
         for size_category, height in enumerate(self.generated_sizes):
             new_height, new_width = self.__downsample_size(height)
@@ -161,7 +170,7 @@ class XXMPEG:
         """
         frame_out = (
             ffmpeg
-            .output(video, self.video_object.frame_path, vframes=1,
+            .output(video, self.video_object.placeholder_frame, vframes=1,
                     ss=self.video.extract_time)
             .overwrite_output()
         )
@@ -174,10 +183,10 @@ class XXMPEG:
         video = video.filter('scale', 250, 250)
         thumb_out = (
             ffmpeg
-            .output(video, self.video_object.thumb_path, vframes=1,
+            .output(video, self.video_object.thumbnail, vframes=1,
                     ss=self.video.extract_time)
             .overwrite_output()
         )
         thumb_out.run(quiet=True)
 
-        return self.video_variants
+        return self.video_object
