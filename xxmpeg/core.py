@@ -1,48 +1,12 @@
 from logzero import setup_logger
-from dataclasses import dataclass
+from .objects import (
+    VideoObject,
+    VideoVariant,
+    InputVideo
+)
 import random
-from typing import Any
 import ffmpeg
 import os
-
-
-@dataclass
-class InputVideo:
-    path: str
-    codec: str
-    has_audio: bool
-    height: float
-    width: float
-    duration: int
-    name: str
-    ext: str
-    ffmpeg: Any
-    extract_time: int
-
-
-@dataclass
-class VideoVariant:
-    output_directory: str
-    codec: str
-    height: float
-    width: float
-    duration: int
-    name: str
-    ext: str
-    size_category: int
-    ffmpeg: Any
-
-    @property
-    def filename(self):
-        return f'{self.name}_{self.height}p.{self.ext}'
-
-    @property
-    def path(self):
-        return f'{self.output_directory}/{self.filename}'
-
-    @property
-    def frame_path(self):
-        return f'{self.output_directory}/{self.name}_{self.height}p_frame.jpeg'
 
 
 class XXMPEG:
@@ -61,6 +25,7 @@ class XXMPEG:
         self.video = None
         self.video_probe = dict()
         self.video_variants = []
+        self.video_object = None
 
         if not os.path.isdir(self.output_directory):
             raise FileNotFoundError
@@ -114,10 +79,18 @@ class XXMPEG:
             extract_time=extract_time
         )
 
+        self.video_object = VideoObject(
+            name=name,
+            maximum_size_category=0,
+            preferred_size_category=0,
+            duration=duration,
+            variants=[]
+        )
+
     def __create_variant(self, height, width, size_category):
         return VideoVariant(
             output_directory=self.output_directory,
-            codec='mpeg',
+            codec='libx264',
             height=height,
             width=width,
             duration=self.video.duration,
@@ -148,7 +121,7 @@ class XXMPEG:
             new_height, new_width = self.__downsample_size(height)
             variant = self.__create_variant(new_height, new_width,
                                             size_category)
-            self.video_variants.append(variant)
+            self.video_object.variants.append(variant)
 
     def __downsample_size(self, new_height):
         factor = self.video.width / self.video.height
@@ -158,7 +131,8 @@ class XXMPEG:
         return (new_height, new_width)
 
     def output(self):
-        for variant in self.video_variants:
+        variants = self.video_object.variants
+        for variant in variants:
             streams = []
             video = variant.ffmpeg.video
             video = video.filter('scale', variant.width, variant.height)
@@ -180,12 +154,30 @@ class XXMPEG:
                 .overwrite_output()
             )
             out.run(quiet=True)
-            frame_out = (
-                ffmpeg
-                .output(video, variant.frame_path, vframes=1,
-                        ss=self.video.extract_time)
-                .overwrite_output()
-            )
-            frame_out.run(quiet=True)
+
+        video = self.video.ffmpeg
+        """
+        Create placeholder frame
+        """
+        frame_out = (
+            ffmpeg
+            .output(video, self.video_object.frame_path, vframes=1,
+                    ss=self.video.extract_time)
+            .overwrite_output()
+        )
+        frame_out.run(quiet=True)
+
+        """
+        Create thumbnail
+        """
+        video = self.video.ffmpeg.video
+        video = video.filter('scale', 250, 250)
+        thumb_out = (
+            ffmpeg
+            .output(video, self.video_object.thumb_path, vframes=1,
+                    ss=self.video.extract_time)
+            .overwrite_output()
+        )
+        thumb_out.run(quiet=True)
 
         return self.video_variants
