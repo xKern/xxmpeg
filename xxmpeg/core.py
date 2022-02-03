@@ -158,7 +158,6 @@ class XXMPEG:
         return (new_height, new_width)
 
     def output(self):
-        self.video_variants = [self.video_variants[0]]
         for variant in self.video_variants:
             streams = []
             video = variant.ffmpeg.video
