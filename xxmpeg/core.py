@@ -4,6 +4,7 @@ from .objects import (
     VideoVariant,
     InputVideo
 )
+from prettyprinter import cpprint
 import random
 import ffmpeg
 import os
@@ -139,6 +140,16 @@ class XXMPEG:
             new_width = new_width + 1
         return (new_height, new_width)
 
+    def __get_variant_metadata(self, variant):
+        probe = ffmpeg.probe(variant.path)
+        video_stream = probe['streams'][0]
+        size = os.stat(variant.path).st_size
+        return {
+            'bitrate': int(video_stream.get('bit_rate')),
+            'size': size,
+            'aspect_ratio': 1.1
+        }
+
     def output(self):
         variants = self.video_object.variants
         for variant in variants:
@@ -163,6 +174,14 @@ class XXMPEG:
                 .overwrite_output()
             )
             out.run(quiet=True)
+            """
+            Update VideoVariant.bitrate, VideoVariant.size,
+                VideoVariant.aspect_ratio
+            """
+            metadata = self.__get_variant_metadata(variant)
+            variant.bitrate = metadata['bitrate']
+            variant.size = metadata['size']
+            variant.aspect_ratio = metadata['aspect_ratio']
 
         video = self.video.ffmpeg
         """

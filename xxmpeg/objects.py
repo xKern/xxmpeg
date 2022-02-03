@@ -27,6 +27,13 @@ class VideoVariant:
     ext: str
     size_category: int
     ffmpeg: Any
+    bitrate: int = 0
+    size: int = 0
+    aspect_ratio: float = 0
+
+    @property
+    def mime_type(self):
+        return 'video/mpeg4'
 
     @property
     def filename(self):
