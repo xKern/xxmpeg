@@ -2,6 +2,7 @@ from logzero import setup_logger
 from .objects import (
     VideoObject,
     VideoVariant,
+    ImageVariant,
     InputVideo
 )
 from prettyprinter import cpprint
@@ -77,10 +78,26 @@ class XXMPEG:
         )
 
     def __factory_video_object(self):
+        frame = ImageVariant(
+            output_directory=self.output_directory,
+            name=self.video.name,
+            height=self.video.height,
+            width=self.video.width,
+            form='frame'
+        )
+        thumb = ImageVariant(
+            output_directory=self.output_directory,
+            name=self.video.name,
+            height=250,
+            width=250,
+            form='thumb'
+        )
         self.video_object = VideoObject(
             output_directory=self.output_directory,
             name=self.video.name,
             duration=self.video.duration,
+            thumbnail=thumb,
+            placeholder_frame=frame,
             variants=[]
         )
 
@@ -143,11 +160,8 @@ class XXMPEG:
     def __get_variant_metadata(self, variant):
         probe = ffmpeg.probe(variant.path)
         video_stream = probe['streams'][0]
-        size = os.stat(variant.path).st_size
         return {
             'bitrate': int(video_stream.get('bit_rate')),
-            'size': size,
-            'aspect_ratio': 1.1
         }
 
     def output(self):
@@ -181,7 +195,6 @@ class XXMPEG:
             metadata = self.__get_variant_metadata(variant)
             variant.bitrate = metadata['bitrate']
             variant.size = metadata['size']
-            variant.aspect_ratio = metadata['aspect_ratio']
 
         video = self.video.ffmpeg
         """
@@ -189,7 +202,7 @@ class XXMPEG:
         """
         frame_out = (
             ffmpeg
-            .output(video, self.video_object.placeholder_frame, vframes=1,
+            .output(video, self.video_object.placeholder_frame.path, vframes=1,
                     ss=self.video.extract_time)
             .overwrite_output()
         )
@@ -202,7 +215,7 @@ class XXMPEG:
         video = video.filter('scale', 250, 250)
         thumb_out = (
             ffmpeg
-            .output(video, self.video_object.thumbnail, vframes=1,
+            .output(video, self.video_object.thumbnail.path, vframes=1,
                     ss=self.video.extract_time)
             .overwrite_output()
         )
