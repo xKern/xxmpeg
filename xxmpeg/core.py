@@ -5,7 +5,6 @@ from .objects import (
     ImageVariant,
     InputVideo
 )
-from prettyprinter import cpprint
 import random
 import ffmpeg
 import os
@@ -194,7 +193,6 @@ class XXMPEG:
             """
             metadata = self.__get_variant_metadata(variant)
             variant.bitrate = metadata['bitrate']
-            variant.size = metadata['size']
 
         video = self.video.ffmpeg
         """

@@ -29,8 +29,7 @@ class VideoVariant:
     size_category: int
     ffmpeg: Any
     bitrate: int = 0
-    size: int = 0
-    mime_type: str = 'image/jpeg'
+    mime_type: str = 'video/mp4'
 
     @property
     def size(self):
