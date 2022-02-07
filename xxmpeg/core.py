@@ -54,7 +54,15 @@ class XXMPEG:
         orig_width = video_stream['width']
         orig_height = video_stream['height']
         codec = video_stream['codec_name']
-        duration = float(video_stream['duration'])
+
+        try:
+            duration = float(video_stream['duration'])
+        except KeyError:
+            """
+            MKV Files duration is not available in the stream probe
+            """
+            duration = float(self.probe['format']['duration'])
+
         name, ext = os.path.splitext(os.path.basename(self.input_path))
         extract_time = random.randrange(1, int(duration))
 
