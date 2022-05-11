@@ -5,6 +5,11 @@ from .objects import (
     ImageVariant,
     InputVideo
 )
+from parallel_tasks import (
+    ParallelRunner,
+    Function,
+    Task
+)
 import random
 import ffmpeg
 import os
@@ -171,36 +176,48 @@ class XXMPEG:
             'bitrate': int(video_stream.get('bit_rate')),
         }
 
+    def actual_work(self, variant):
+        streams = []
+        video = variant.ffmpeg.video
+        video = video.filter('scale', variant.width, variant.height)
+        video = video.filter('fps', 24)
+        streams.append(video)
+
+        if self.video.has_audio:
+            audio = self.video.ffmpeg.audio
+            streams.append(audio)
+
+        target_bitrate = min(variant.height, variant.width) / 1.8
+        args = {
+            'vcodec': 'libx264',
+            'acodec': 'libmp3lame',
+            'video_bitrate': f'{target_bitrate}k',
+            'format': 'mp4'
+        }
+        out = (
+            ffmpeg.output(*streams, variant.path, **args)
+            .overwrite_output()
+        )
+        out.run(quiet=False)
+        """
+        Update VideoVariant.bitrate, VideoVariant.size,
+            VideoVariant.aspect_ratio
+        """
+        metadata = self.__get_variant_metadata(variant)
+        variant.bitrate = metadata['bitrate']
+
     def output(self):
         variants = self.video_object.variants
+        tasks = []
         for variant in variants:
-            streams = []
-            video = variant.ffmpeg.video
-            video = video.filter('scale', variant.width, variant.height)
-            video = video.filter('fps', 24)
-            streams.append(video)
+            # self.actual_work(variant)
+            func = Function(target=self.actual_work, arguments={'variant':
+                                                                variant})
+            task = Task(name='proc_video', target=func)
+            tasks.append(task)
 
-            if self.video.has_audio:
-                audio = self.video.ffmpeg.audio
-                streams.append(audio)
-
-            args = {
-                'vcodec': 'libx264',
-                'acodec': 'libmp3lame',
-                'video_bitrate': '2.5M',
-                'format': 'mp4'
-            }
-            out = (
-                ffmpeg.output(*streams, variant.path, **args)
-                .overwrite_output()
-            )
-            out.run(quiet=True)
-            """
-            Update VideoVariant.bitrate, VideoVariant.size,
-                VideoVariant.aspect_ratio
-            """
-            metadata = self.__get_variant_metadata(variant)
-            variant.bitrate = metadata['bitrate']
+        runner = ParallelRunner(tasks=tasks)
+        runner.run_all()
 
         video = self.video.ffmpeg
         """
