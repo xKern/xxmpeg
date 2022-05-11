@@ -2,7 +2,7 @@ from distutils.core import setup
 setup(
       name='xxmpeg',         # How you named your package folder (MyLib)
       packages=['xxmpeg'],   # Chose the same as "name"
-      version='0.0.3',
+      version='0.0.4',
       license='MIT',
       description=('Simple wrapper atop ffmpeg to resize videos '
                    'into multiple variants'),
@@ -10,7 +10,12 @@ setup(
       author_email='me@haiderali.dev',      # Type in your E-Mail
       url='https://github.com/xKern/xxmpeg',
       keywords=['XKERN', 'XXMPEG', 'PYTHON', 'FFMPEG', 'OPENCV'],
-      install_requires=['ffmpeg-python==0.1.18', 'opencv-python', 'logzero'],
+      install_requires=[
+          'ffmpeg-python==0.1.18',
+          'opencv-python',
+          'logzero',
+          'parallel_tasks @ git+https://github.com/arx8x/py-parallel-tasks.git'
+      ],
       classifiers=[
             'Development Status :: 3 - Alpha',
             'Intended Audience :: Developers',
