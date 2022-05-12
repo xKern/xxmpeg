@@ -35,13 +35,13 @@ class XXMPEG:
         self.video_object = None
 
         if not os.path.isdir(self.output_directory):
-            raise FileNotFoundError
+            raise NotADirectoryError(f"The output path {self.output_directory} isn't a directory")
 
         if not os.path.isfile(self.input_path):
-            raise FileNotFoundError
+            raise FileNotFoundError(f"Cannot find input file: {self.input_path}")
 
-        if not os.path.isdir(self.output_directory):
-            raise FileNotFoundError
+        if not os.path.isdir(log_directory):
+            raise NotADirectoryError(f"The path for logs '{log_directory}' isn't a directory")
 
         self.logger = setup_logger(
             self.name,
