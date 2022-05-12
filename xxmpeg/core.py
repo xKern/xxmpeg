@@ -19,7 +19,8 @@ class XXMPEG:
     size_categories = [240, 360, 480, 720, 1080]
 
     def __init__(self, input_path, output_directory,
-                 log_directory):
+                 log_directory, quiet_mode=False):
+        self.quiet_mode = quiet_mode
         self.input_path = input_path
         self.output_directory = output_directory.rstrip("/")
         self.name = os.path.basename(self.input_path)
@@ -145,8 +146,8 @@ class XXMPEG:
                 diff_comp = diff
                 closest_size_category = index
 
-        self.generated_sizes = self.size_categories[0:closest_size_category]
-        self.generated_sizes.append(self.video.height)
+        self.generated_sizes = self.size_categories[0:closest_size_category+1]
+        # self.generated_sizes.append(self.video.height)
 
         preferred_size_category = len(self.generated_sizes) - 1
 
@@ -198,7 +199,7 @@ class XXMPEG:
             ffmpeg.output(*streams, variant.path, **args)
             .overwrite_output()
         )
-        out.run(quiet=False)
+        out.run(quiet=self.quiet_mode)
         """
         Update VideoVariant.bitrate, VideoVariant.size,
             VideoVariant.aspect_ratio
@@ -229,7 +230,7 @@ class XXMPEG:
                     ss=self.video.extract_time)
             .overwrite_output()
         )
-        frame_out.run(quiet=True)
+        frame_out.run(quiet=self.quiet_mode)
 
         """
         Create thumbnail
@@ -242,6 +243,6 @@ class XXMPEG:
                     ss=self.video.extract_time)
             .overwrite_output()
         )
-        thumb_out.run(quiet=True)
+        thumb_out.run(quiet=self.quiet_code)
 
         return self.video_object
