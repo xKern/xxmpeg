@@ -193,6 +193,7 @@ class XXMPEG:
             'vcodec': 'libx264',
             'acodec': 'libmp3lame',
             'video_bitrate': f'{target_bitrate}k',
+            'ab': '92K',
             'format': 'mp4',
             'ac': '1'
         }
