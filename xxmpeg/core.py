@@ -193,7 +193,8 @@ class XXMPEG:
             'vcodec': 'libx264',
             'acodec': 'libmp3lame',
             'video_bitrate': f'{target_bitrate}k',
-            'format': 'mp4'
+            'format': 'mp4',
+            'ac': '1'
         }
         out = (
             ffmpeg.output(*streams, variant.path, **args)
@@ -243,6 +244,6 @@ class XXMPEG:
                     ss=self.video.extract_time)
             .overwrite_output()
         )
-        thumb_out.run(quiet=self.quiet_code)
+        thumb_out.run(quiet=self.quiet_mode)
 
         return self.video_object
