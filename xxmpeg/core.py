@@ -13,6 +13,7 @@ from parallel_tasks import (
 import random
 import ffmpeg
 import os
+from pprint import pp
 
 
 class XXMPEG:
@@ -55,7 +56,15 @@ class XXMPEG:
         """
         Factory method to create InputVideo
         """
-        video_stream = self.probe['streams'][0]
+        video_streams = []
+        if(streams := self.probe.get('streams')):
+            for stream in streams:
+                if stream['codec_type'] == 'video':
+                    video_streams.append(stream)
+        if not video_streams:
+            raise Exception("The input video doesn't contain any video stream")
+        # select best stream based on available pixels
+        video_stream = max(video_streams, key=lambda x: x['height'] * x['width'])
         orig_width = video_stream['width']
         orig_height = video_stream['height']
         codec = video_stream['codec_name']
