@@ -108,7 +108,7 @@ class XXMPEG:
         self.video_object = VideoObject(
             output_directory=self.output_directory,
             name=self.video.name,
-            duration=self.video.duration,
+            duration=int(self.video.duration*1000),
             thumbnail=thumb,
             placeholder_frame=frame,
             variants=[]
