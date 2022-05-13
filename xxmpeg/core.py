@@ -125,7 +125,7 @@ class XXMPEG:
             codec='libx264',
             height=height,
             width=width,
-            duration=self.video.duration,
+            duration=int(self.video.duration*1000),
             name=self.video.name,
             ext='mp4',
             ffmpeg=self.video.ffmpeg,
