@@ -3,6 +3,15 @@ from typing import Any, List, Optional
 import os
 
 
+size_categories = {
+    240: 0,
+    360: 1,
+    480: 2,
+    720: 3,
+    1080: 4
+}
+
+
 @dataclass
 class InputVideo:
     path: str
@@ -73,6 +82,10 @@ class ImageVariant:
     @property
     def aspect_ratio(self):
         return (self.width / self.height)
+
+    @property
+    def size_category(self):
+        return size_categories.get(self.height, 0)
 
 
 @dataclass
