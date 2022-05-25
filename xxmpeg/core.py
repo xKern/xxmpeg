@@ -19,7 +19,9 @@ class XXMPEG:
     size_categories = [240, 360, 480, 720, 1080]
 
     def __init__(self, input_path, output_directory,
-                 log_directory, quiet_mode=False):
+                 log_directory, quiet_mode=False,
+                 video_quality_factor=1.2):
+        self.vid_qly = video_quality_factor
         self.quiet_mode = quiet_mode
         self.input_path = input_path
         self.output_directory = output_directory.rstrip("/")
@@ -188,7 +190,7 @@ class XXMPEG:
             audio = self.video.ffmpeg.audio
             streams.append(audio)
 
-        target_bitrate = min(variant.height, variant.width) / 1.8
+        target_bitrate = min(variant.height, variant.width) / self.vid_qly
         args = {
             'vcodec': 'libx264',
             'acodec': 'libmp3lame',
