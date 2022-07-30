@@ -2,7 +2,7 @@ from distutils.core import setup
 setup(
       name='xxmpeg',         # How you named your package folder (MyLib)
       packages=['xxmpeg'],   # Chose the same as "name"
-      version='0.1.0',
+      version='0.1.1',
       license='MIT',
       description=('Simple wrapper atop ffmpeg to resize videos '
                    'into multiple variants'),

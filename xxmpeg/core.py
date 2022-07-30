@@ -13,6 +13,8 @@ from parallel_tasks import (
 import random
 import ffmpeg
 import os
+import re
+import json
 from pprint import pp
 
 
@@ -188,6 +190,46 @@ class XXMPEG:
             'bitrate': int(video_stream.get('bit_rate')),
         }
 
+    def audio_norm_params(self, audio_stream) -> dict:
+        # take an input stream, generate audio normalization
+        # params for the audio stream
+        audio_stream = audio_stream.filter('loudnorm', print_format='json')
+        opts = {
+            'f': 'null'
+        }
+        out = ffmpeg.output(audio_stream, "/dev/null", **opts)
+        x = out.run(quiet=True)
+        regex = r"\{\s+\".+\}"
+        stdout = x[1]
+        matches = re.findall(regex, stdout.decode(), re.M | re.S)
+        if not matches:
+            return {}
+        match = matches[0]
+        try:
+            props = json.loads(match)
+            return props
+        except Exception:
+            pass
+        return {}
+
+    def apply_audio_norm_params(self, audio_stream, params):
+        audio_params = {
+             'measured_I': 'input_i',
+             'measured_LRA': 'input_lra',
+             'measured_tp': 'input_tp',
+             'measured_thresh': 'input_thresh'
+        }
+        filter_params = {'linear': 'true'}
+        for (arg_name, param_key) in audio_params.items():
+            if not (val := params.get(param_key)):
+                # if one of the keys is missing, skip normalization
+                # and return original stream
+                return audio_stream
+            filter_params[arg_name] = val
+
+        aud = audio_stream.filter('loudnorm', **filter_params)
+        return aud
+
     def actual_work(self, variant):
         streams = []
         video = variant.ffmpeg.video
@@ -197,6 +239,10 @@ class XXMPEG:
 
         if self.video.has_audio:
             audio = self.video.ffmpeg.audio
+            if (audio_params := self.audio_norm_params(audio)):
+                audio = self.apply_audio_norm_params(audio, audio_params)
+                # slightly amp the normalized audio
+                audio = audio.filter('volume', '2.5')
             streams.append(audio)
 
         target_bitrate = min(variant.height, variant.width) / self.vid_qly
