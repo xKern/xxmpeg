@@ -232,7 +232,7 @@ class XXMPEG():
             if w % 2:
                 w += 1
             size_category = 3
-        args['filter:v'] = f"scale={w}:{h}"
+            args['filter:v'] = f"scale={w}:{h}"
 
         ffrun = ffmpeg.output(video_stream['stream'], path, **args)
         ffrun = ffrun.overwrite_output()
