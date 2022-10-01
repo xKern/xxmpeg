@@ -1,27 +1,25 @@
 from distutils.core import setup
 setup(
-      name='xxmpeg',         # How you named your package folder (MyLib)
-      packages=['xxmpeg'],   # Chose the same as "name"
-      version='0.1.1',
+      name='xxmpeg',
+      packages=['xxmpeg'],
+      version='2.0',
       license='MIT',
-      description=('Simple wrapper atop ffmpeg to resize videos '
-                   'into multiple variants'),
-      author='Haider Ali',                   # Type in your name
-      author_email='me@haiderali.dev',      # Type in your E-Mail
+      description=('Trancoder based on ffmpeg to create video variants,'
+                   'placeholder image and thumbnail from a video container'),
+      author='ARX8x, Haider Ali',
+      author_email='root@xken.net',
       url='https://github.com/xKern/xxmpeg',
-      keywords=['XKERN', 'XXMPEG', 'PYTHON', 'FFMPEG', 'OPENCV'],
+      keywords=['xKern', 'xxmpeg', 'trascoder', 'mediaobject', 'ffmpeg', 'ffprobe'],
       install_requires=[
-          'ffmpeg-python==0.1.18',
-          'opencv-python',
-          'logzero',
-          'parallel_tasks @ git+https://github.com/arx8x/py-parallel-tasks.git'
+        'ffmpeg-python==0.1.18',
+        'opencv-python',
+        'logzero',
+        'parallel_tasks @ git+https://github.com/arx8x/py-parallel-tasks.git'
       ],
       classifiers=[
-            'Development Status :: 3 - Alpha',
             'Intended Audience :: Developers',
-            'Topic :: Software Development :: Build Tools',
             'License :: OSI Approved :: MIT License',
             'Programming Language :: Python :: 3',
-            'Programming Language :: Python :: 3.10',
+            'Programming Language :: Python :: 3.9',
         ],
 )
