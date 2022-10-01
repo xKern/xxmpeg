@@ -65,6 +65,13 @@ class XXMPEG():
         self.total_bitrate = 0
         self.__get_metdata()
         self.__selected_streams = ()
+        # filename without extention to prepend to variant filenames
+        self.__file_name = None
+        if (basename := os.path.basename(self.input_path)):
+            if (filename_split := os.path.splitext(basename)) and filename_split[1]:
+                self.__file_name = filename_split[0]
+        if not self.__file_name:
+            self.__file_name = str(uuid4())
 
     def __get_metdata(self):
         if not (file_info := self.probe.get('format')):
@@ -159,14 +166,8 @@ class XXMPEG():
             input_streams.append(streams[1]['stream'])
 
         variants_params = self.__build_params(variants, streams)
-        # filename without extention to prepend to variant filenames
-        file_name = None
-        if (basename := os.path.basename(self.input_path)):
-            if (filename_split := os.path.splitext(basename)) and filename_split[1]:
-                file_name = filename_split[0]
-        if not file_name:
-            file_name = str(uuid4())
-        output_dir = f"{output_path}/{file_name}"
+
+        output_dir = f"{output_path}/{self.__file_name}"
         os.makedirs(output_dir, exist_ok=True)
         tasks = []
         generated_variants = []
@@ -201,6 +202,8 @@ class XXMPEG():
         streams = self.__select_streams()
         if not streams[0]:
             return None
+        output_dir = f"{output_dir}/{self.__file_name}"
+        os.makedirs(output_dir, exist_ok=True)
         video_stream = streams[0]
         stream_duration = float(video_stream['metadata']['duration'])
         capture_ts_1 = stream_duration * (seeker - 0.05)
