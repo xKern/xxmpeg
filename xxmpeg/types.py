@@ -47,4 +47,3 @@ class VideoObject:
     placeholder_frame: ImageItem
     maximum_size_category: int = 0
     preferred_size_category: int = 0
-    preferred_size_category: int = 0

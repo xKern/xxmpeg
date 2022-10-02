@@ -2,7 +2,7 @@ from distutils.core import setup
 setup(
       name='xxmpeg',
       packages=['xxmpeg'],
-      version='2.0.2',
+      version='2.1.0',
       license='MIT',
       description=('Trancoder based on ffmpeg to create video variants,'
                    'placeholder image and thumbnail from a video container'),

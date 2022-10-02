@@ -6,7 +6,7 @@ from parallel_tasks import ParallelRunner, Function, Task
 # from parallel_tasks import enable_threaded_output, disable_threaded_output
 from uuid import uuid4
 import mimetypes
-from .types import SizeVariant, VideoVariant, ImageItem
+from .types import SizeVariant, VideoVariant, ImageItem, VideoObject
 
 
 preset_variants = {
@@ -240,7 +240,7 @@ class XXMPEG():
         ffrun.run(quiet=self.suppress_ffmpeg_output)
         if os.path.exists(path):
             image_item = ImageItem(path=path,
-                                   mime_type=mimetypes.guess_type(path),
+                                   mime_type=mimetypes.guess_type(path)[0],
                                    size=os.path.getsize(path),
                                    height=h,
                                    width=w,
@@ -319,3 +319,32 @@ class XXMPEG():
         if os.path.exists(output_path):
             return output_path
         return None
+
+    def generate_video_object(self, output_dir: str, variants: SizeVariant):
+        print("-> Generating thumbnail")
+        thumb = self.extract_frame(output_dir, thumbnail=True)
+        print("-> Generating placeholder frame")
+        frame = self.extract_frame(output_dir)
+        print("-> Generating variants")
+        vs = self.create_variants(variants, output_dir)
+        # if 720p is available, set it as preferred quality
+        # else, choose max
+        max_size_category = max(vs, key=lambda x: x.size_category).size_category
+        duration = 0
+        for v in vs:
+            duration = v.duration
+            if v.size_category == 3:
+                preferred_size_category = 3
+                break
+        else:
+            preferred_size_category = max_size_category
+        video_object = VideoObject(
+            output_directory=f"{output_dir}/{self.__file_name}/",
+            duration=duration,
+            variants=vs,
+            thumbnail=thumb,
+            placeholder_frame=frame,
+            maximum_size_category=max_size_category,
+            preferred_size_category=preferred_size_category
+        )
+        return video_object
