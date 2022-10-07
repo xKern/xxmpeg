@@ -376,9 +376,7 @@ class XXMPEG():
         # if 720p is available, set it as preferred quality
         # else, choose max
         max_size_category = max(vs, key=lambda x: x.size_category).size_category
-        duration = 0
         for v in vs:
-            duration = v.duration
             if v.size_category == 3:
                 preferred_size_category = 3
                 break
@@ -386,7 +384,7 @@ class XXMPEG():
             preferred_size_category = max_size_category
         video_object = VideoObject(
             output_directory=f"{output_dir}/{self.__file_name}/",
-            duration=duration,
+            duration=self.original_duration,
             variants=vs,
             thumbnail=thumb,
             placeholder_frame=frame,
