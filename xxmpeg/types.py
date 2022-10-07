@@ -17,6 +17,7 @@ class SizeVariant(IntFlag):
 
 @dataclass
 class VideoVariant:
+    path: str
     codec: str
     height: float
     width: float
@@ -26,6 +27,18 @@ class VideoVariant:
     size_category: int
     bitrate: int
     mime_type: str
+
+    @property
+    def size(self):
+        return os.stat(self.path).st_size
+
+    @property
+    def aspect_ratio(self):
+        return (self.width / self.height)
+
+    @property
+    def filename(self):
+        return self.name
 
 
 @dataclass
@@ -37,6 +50,14 @@ class ImageItem:
     width: int
     size_category: int
 
+    @property
+    def aspect_ratio(self):
+        return (self.width / self.height)
+
+    @property
+    def filename(self):
+        return os.path.basename(self.path)
+
 
 @dataclass
 class VideoObject:
@@ -47,3 +68,7 @@ class VideoObject:
     placeholder_frame: ImageItem
     maximum_size_category: int = 0
     preferred_size_category: int = 0
+
+    @property
+    def name(self):
+        return os.path.basename(self.output_directory)
