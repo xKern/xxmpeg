@@ -273,6 +273,7 @@ class XXMPEG():
             return None
         try:
             variant = VideoVariant(
+                            path=variant_path,
                             codec=video_stream['codec_name'],
                             height=video_stream['height'],
                             width=video_stream['width'],
