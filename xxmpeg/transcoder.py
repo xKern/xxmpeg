@@ -7,7 +7,8 @@ from parallel_tasks import ParallelRunner, Function, Task
 from uuid import uuid4
 import mimetypes
 from .types import SizeVariant, VideoVariant, ImageItem, VideoObject
-
+import re
+import json
 
 preset_variants = {
     SizeVariant.VIDEO240P: {
@@ -77,7 +78,7 @@ class XXMPEG():
         if not (file_info := self.probe.get('format')):
             raise Exception("The file is invalid. Cannot get format information")
         self.original_size = file_info['size']
-        self.original_duration = file_info['duration']
+        self.original_duration = int(float(file_info['duration']) * 1000)
         self.total_bitrate = file_info['bit_rate']
 
     def __select_streams(self) -> tuple:
@@ -148,6 +149,46 @@ class XXMPEG():
         presets.reverse()
         return presets
 
+    def audio_norm_params(self, audio_stream) -> dict:
+        # take an input stream, generate audio normalization
+        # params for the audio stream
+        audio_stream = audio_stream.filter('loudnorm', print_format='json')
+        opts = {
+            'f': 'null'
+        }
+        out = ffmpeg.output(audio_stream, "/dev/null", **opts)
+        x = out.run(quiet=True)
+        regex = r"\{\s+\".+\}"
+        stdout = x[1]
+        matches = re.findall(regex, stdout.decode(), re.M | re.S)
+        if not matches:
+            return {}
+        match = matches[0]
+        try:
+            props = json.loads(match)
+            return props
+        except Exception:
+            pass
+        return {}
+
+    def apply_audio_norm_params(self, audio_stream, params):
+        audio_params = {
+             'measured_I': 'input_i',
+             'measured_LRA': 'input_lra',
+             'measured_tp': 'input_tp',
+             'measured_thresh': 'input_thresh'
+        }
+        filter_params = {'linear': 'true'}
+        for (arg_name, param_key) in audio_params.items():
+            if not (val := params.get(param_key)):
+                # if one of the keys is missing, skip normalization
+                # and return original stream
+                return audio_stream
+            filter_params[arg_name] = val
+
+        aud = audio_stream.filter('loudnorm', **filter_params)
+        return aud
+
     def create_variants(self, variants: SizeVariant, output_path):
         input_streams = []
         if not variants:
@@ -163,7 +204,11 @@ class XXMPEG():
             input_streams.append(streams[0]['stream'])
         # Add audio stream to streams if available
         if streams[1]:
-            input_streams.append(streams[1]['stream'])
+            stream = streams[1]['stream']
+            params = self.audio_norm_params(stream)
+            stream = self.apply_audio_norm_params(stream, params)
+            stream = stream.filter('volume', '3')
+            input_streams.append(stream)
 
         variants_params = self.__build_params(variants, streams)
 
@@ -205,7 +250,7 @@ class XXMPEG():
         output_dir = f"{output_dir}/{self.__file_name}"
         os.makedirs(output_dir, exist_ok=True)
         video_stream = streams[0]
-        stream_duration = float(video_stream['metadata']['duration'])
+        stream_duration = self.original_duration / 1000
         capture_ts_1 = stream_duration * (seeker - 0.05)
         capture_ts_1 = min(0, capture_ts_1)
         capture_ts_2 = stream_duration * (seeker + 0.05)
